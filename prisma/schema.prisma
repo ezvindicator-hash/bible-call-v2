@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A topic from the master list (Church, Purgatory, Infant Baptism, ...).
+model Category {
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
+  name        String
+  displayName String
+  groupName   String?
+  order       Int
+  entries     Entry[]
+}
+
+// One citation line from the master list, a Church Father quotation, or a
+// standalone note. kind: "verse" | "father".
+model Entry {
+  id          Int       @id @default(autoincrement())
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  kind        String    @default("verse")
+  refDisplay  String    @default("")
+  summary     String    @default("")
+  note        String?
+  isObjection Boolean   @default(false)
+  author      String?
+  year        String?
+  work        String?
+  text        String?
+  order       Int
+  searchText  String    @default("")
+  passages    Passage[]
+
+  @@index([categoryId])
+}
+
+// One resolved scripture citation with its Douay-Rheims text.
+model Passage {
+  id         Int    @id @default(autoincrement())
+  entryId    Int
+  entry      Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  ref        String
+  book       String
+  bookName   String
+  chapter    Int
+  verseStart Int
+  verseEnd   Int
+  verseCount Int    @default(1)
+  versesJson String @default("[]")
+  notesJson  String?
+  annotJson  String?
+  note       String?
+  order      Int
+
+  @@index([entryId])
+}
