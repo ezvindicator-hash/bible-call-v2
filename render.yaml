@@ -1,0 +1,11 @@
+# Optional Render Blueprint. Deploy by either:
+#   1. Render Dashboard > New + > Blueprint, select this repository, or
+#   2. follow the manual dashboard steps in DEPLOY.md.
+# Fields match Render's blueprint spec: type: web + runtime: static makes this
+# a static site; staticPublishPath is the directory `npm run build` writes.
+services:
+  - type: web
+    name: catholic-apologetics
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./out

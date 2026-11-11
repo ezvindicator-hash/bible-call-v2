@@ -19,7 +19,8 @@ import { FatherQuote } from '@/components/father-quote'
 import { SiteFooter } from '@/components/site-footer'
 import { Highlight } from '@/components/highlight'
 import { searchTerms } from '@/lib/search'
-import type { CategoriesResponse, EntryDTO, StatsDTO } from '@/lib/types'
+import { loadCategories, loadEntries } from '@/lib/client-data'
+import type { CategoriesResponse, EntryDTO, EntriesResponse, StatsDTO } from '@/lib/types'
 
 type View = { mode: 'home' } | { mode: 'category'; slug: string } | { mode: 'search'; q: string }
 
@@ -30,12 +31,6 @@ function useDebouncedValue<T>(value: T, delay: number): T {
     return () => window.clearTimeout(t)
   }, [value, delay])
   return debounced
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
-  return (await res.json()) as T
 }
 
 function numberFmt(n: number) {
@@ -276,7 +271,7 @@ export function ApologeticsAppInner() {
 
   const categoriesQ = useQuery({
     queryKey: ['categories'],
-    queryFn: () => fetchJson<CategoriesResponse>('/api/categories'),
+    queryFn: () => loadCategories(),
   })
 
   React.useEffect(() => {
@@ -299,13 +294,12 @@ export function ApologeticsAppInner() {
       view.mode === 'search' ? view.q : '',
       objectionOnly,
     ],
-    queryFn: () => {
-      const params = new URLSearchParams()
-      if (view.mode === 'search') params.set('q', view.q)
-      if (view.mode === 'category') params.set('category', view.slug)
-      if (objectionOnly) params.set('objection', '1')
-      return fetchJson(`/api/entries?${params.toString()}`)
-    },
+    queryFn: () =>
+      loadEntries({
+        q: view.mode === 'search' ? view.q : '',
+        category: view.mode === 'category' ? view.slug : '',
+        objection: objectionOnly,
+      }),
     enabled: view.mode !== 'home' || objectionOnly,
     placeholderData: (prev: unknown) => prev,
   })
@@ -323,8 +317,8 @@ export function ApologeticsAppInner() {
   }
 
   const categories = categoriesQ.data?.categories ?? []
-  const entries = (entriesQ.data as { total: number; entries: EntryDTO[] } | undefined)?.entries ?? []
-  const entriesTotal = (entriesQ.data as { total: number } | undefined)?.total ?? 0
+  const entries = (entriesQ.data as EntriesResponse | undefined)?.entries ?? []
+  const entriesTotal = (entriesQ.data as EntriesResponse | undefined)?.total ?? 0
   const activeCategory = categories.find((c) => c.slug === activeSlug)
 
   const showObjectionHome = view.mode === 'home' && objectionOnly

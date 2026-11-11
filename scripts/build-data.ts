@@ -13,6 +13,8 @@ const ROOT = process.cwd()
 const MASTER = join(ROOT, 'upload', 'Master List BV &c..md')
 const DR_DIR = join(ROOT, 'douay-rheims')
 const OUT = join(ROOT, 'src', 'data', 'apologetics.json')
+// Static-site copy: the browser fetches this file at runtime (no server, no database).
+const OUT_PUBLIC = join(ROOT, 'public', 'data', 'apologetics.json')
 
 // ---------------------------------------------------------------------------
 // Book abbreviation map (master list abbreviation -> Douay-Rheims file name).
@@ -779,7 +781,9 @@ function main() {
   }
 
   writeFileSync(OUT, JSON.stringify(data, null, 1))
+  writeFileSync(OUT_PUBLIC, JSON.stringify(data, null, 1))
   console.log(`Wrote ${OUT}`)
+  console.log(`Wrote ${OUT_PUBLIC}`)
   console.log(JSON.stringify(data.stats, null, 2))
   if (missing.length) {
     console.log('\nEntries with no resolved passage:')
